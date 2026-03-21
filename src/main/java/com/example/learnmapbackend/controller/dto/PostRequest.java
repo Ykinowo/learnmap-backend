@@ -9,6 +9,7 @@ public class PostRequest {
     private String locationName;
     private Double latitude;
     private Double longitude;
-    private String tags;      // 逗号分隔
+    private String tags;
     private boolean isAnonymous;
+    private String imageUrls;  // 新增
 }

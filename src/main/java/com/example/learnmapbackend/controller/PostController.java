@@ -30,14 +30,15 @@ public class PostController {
         }
         try {
             Post post = postService.createPost(
-                    username,
-                    postRequest.getTitle(),
-                    postRequest.getContent(),
-                    postRequest.getLocationName(),
-                    postRequest.getLatitude(),
-                    postRequest.getLongitude(),
-                    postRequest.getTags(),
-                    postRequest.isAnonymous()
+                            username,
+                            postRequest.getTitle(),
+                            postRequest.getContent(),
+                            postRequest.getLocationName(),
+                            postRequest.getLatitude(),
+                            postRequest.getLongitude(),
+                            postRequest.getTags(),
+                            postRequest.isAnonymous(),
+                            postRequest.getImageUrls()   // 传入
             );
             return ApiResponse.success(post);
         } catch (Exception e) {
