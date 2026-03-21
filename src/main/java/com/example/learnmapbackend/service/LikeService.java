@@ -8,6 +8,7 @@ import com.example.learnmapbackend.repository.PostRepository;
 import com.example.learnmapbackend.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class LikeService {
@@ -21,6 +22,7 @@ public class LikeService {
     @Autowired
     private UserRepository userRepository;
 
+    @Transactional  // 添加这一行
     public boolean likePost(String username, Long postId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));

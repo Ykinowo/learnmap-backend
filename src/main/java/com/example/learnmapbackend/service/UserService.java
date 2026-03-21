@@ -40,4 +40,15 @@ public class UserService {
         return userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
     }
+
+    public User updateProfile(String username, String newNickname, String newBio) {
+        User user = getUserByUsername(username);
+        if (newNickname != null && !newNickname.isBlank()) {
+            user.setUsername(newNickname);
+        }
+        if (newBio != null) {
+            user.setBio(newBio);
+        }
+        return userRepository.save(user);
+    }
 }

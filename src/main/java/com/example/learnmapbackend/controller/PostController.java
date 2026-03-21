@@ -2,6 +2,7 @@ package com.example.learnmapbackend.controller;
 
 import com.example.learnmapbackend.controller.dto.ApiResponse;
 import com.example.learnmapbackend.controller.dto.PostRequest;
+import com.example.learnmapbackend.controller.dto.WeightedLatLngDTO;
 import com.example.learnmapbackend.entity.Post;
 import com.example.learnmapbackend.service.LikeService;
 import com.example.learnmapbackend.service.PostService;
@@ -88,6 +89,16 @@ public class PostController {
         try {
             boolean liked = likeService.isPostLikedByUser(username, postId);
             return ApiResponse.success(liked);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    @GetMapping("/heatmap")
+    public ApiResponse<List<WeightedLatLngDTO>> getHeatMapData() {
+        try {
+            List<WeightedLatLngDTO> data = postService.getHeatMapData();
+            return ApiResponse.success(data);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }
