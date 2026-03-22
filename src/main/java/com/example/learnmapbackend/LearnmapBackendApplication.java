@@ -7,7 +7,7 @@ import org.springframework.boot.web.servlet.ServletComponentScan;
 @ServletComponentScan
 @SpringBootApplication
 
-public class LearnmapBackendApplication {
+public class  LearnmapBackendApplication {
 
     public static void main(String[] args) {
         SpringApplication.run(LearnmapBackendApplication.class, args);
