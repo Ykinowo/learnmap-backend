@@ -11,23 +11,25 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class DeepSeekService {
+public class ZhipuAiService {
 
-    @Value("${deepseek.api.key}")
+    @Value("${zhipu.api.key}")
     private String apiKey;
 
-    private static final String API_URL = "https://api.deepseek.com/v1/chat/completions";
+    private static final String API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
     private final OkHttpClient client = new OkHttpClient();
     private final ObjectMapper mapper = new ObjectMapper();
 
     public String askQuestion(String question) throws IOException {
-        // 构建请求体
+        // 构建请求体（智谱 GLM-4 格式）
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("model", "deepseek-chat");
+        requestBody.put("model", "glm-4");
         requestBody.put("messages", new Object[]{
                 Map.of("role", "user", "content", question)
         });
         requestBody.put("temperature", 0.7);
+        requestBody.put("top_p", 0.9);
+        requestBody.put("stream", false);  // 不使用流式
 
         String json = mapper.writeValueAsString(requestBody);
 
@@ -40,10 +42,11 @@ public class DeepSeekService {
 
         try (Response response = client.newCall(request).execute()) {
             if (!response.isSuccessful()) {
-                throw new IOException("Unexpected code " + response);
+                throw new IOException("智谱 AI 请求失败，状态码：" + response.code() + "，信息：" + response.message());
             }
             String responseBody = response.body().string();
             JsonNode root = mapper.readTree(responseBody);
+            // 智谱的返回结构：choices[0].message.content
             return root.path("choices").get(0).path("message").path("content").asText();
         }
     }
