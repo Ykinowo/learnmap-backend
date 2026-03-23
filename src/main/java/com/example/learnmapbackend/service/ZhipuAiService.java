@@ -9,6 +9,7 @@ import org.springframework.stereotype.Service;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class ZhipuAiService {
@@ -17,8 +18,11 @@ public class ZhipuAiService {
     private String apiKey;
 
     private static final String API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
-    private final OkHttpClient client = new OkHttpClient();
-    private final ObjectMapper mapper = new ObjectMapper();
+    private final OkHttpClient client = new OkHttpClient.Builder()
+            .connectTimeout(60, TimeUnit.SECONDS)   // 连接超时60秒
+            .writeTimeout(60, TimeUnit.SECONDS)     // 写入超时60秒
+            .readTimeout(120, TimeUnit.SECONDS)     // 读取超时120秒（智谱生成复杂问题可能需要较长时间）
+            .build();    private final ObjectMapper mapper = new ObjectMapper();
 
     public String askQuestion(String question) throws IOException {
         // 构建请求体（智谱 GLM-4 格式）
