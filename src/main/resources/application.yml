@@ -1,5 +1,5 @@
 upload:
-  path: D:\LearnMap\LearnMapUploads
+  path: D:/LearnMap/LearnMapUploads
 spring:
   web:
     resources:
