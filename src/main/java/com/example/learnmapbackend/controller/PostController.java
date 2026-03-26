@@ -25,6 +25,7 @@ public class PostController {
 
     @PostMapping
     public ApiResponse<Post> createPost(HttpServletRequest request, @RequestBody PostRequest postRequest) {
+        System.out.println("Received postRequest: " + postRequest);     // 添加打印
         String username = (String) request.getAttribute("username");
         if (username == null) {
             return ApiResponse.error("未登录");

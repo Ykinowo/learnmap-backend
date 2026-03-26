@@ -1,5 +1,6 @@
 package com.example.learnmapbackend.controller.dto;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 
 @Data
@@ -10,6 +11,7 @@ public class PostRequest {
     private Double latitude;
     private Double longitude;
     private String tags;
+    @JsonProperty("isAnonymous")
     private boolean isAnonymous;
-    private String imageUrls;  // 新增
+    private String imageUrls;
 }
