@@ -22,7 +22,10 @@ public class LikeService {
     @Autowired
     private UserRepository userRepository;
 
-    @Transactional  // 添加这一行
+    @Autowired
+    private NotificationService notificationService; // 新增注入
+
+    @Transactional
     public boolean likePost(String username, Long postId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -41,6 +44,13 @@ public class LikeService {
             likeRepository.save(like);
             post.setLikeCount(post.getLikeCount() + 1);
             postRepository.save(post);
+
+            // 点赞成功，通知帖子作者（如果不是自己）
+            User author = post.getUser();
+            if (!author.getUsername().equals(username)) {
+                notificationService.notifyUser(author.getUsername(), "LIKE", "你的帖子被点赞了", postId);
+            }
+
             return true; // 点赞成功
         }
     }

@@ -23,6 +23,9 @@ public class CommentService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public Comment addComment(String username, Long postId, String content, Long parentId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
@@ -38,10 +41,20 @@ public class CommentService {
         post.setCommentCount(post.getCommentCount() + 1);
         postRepository.save(post);
 
+        // 通知帖子作者（如果不是自己）
+        User author = post.getUser();
+        if (!author.getUsername().equals(username)) { // 不是自己评论自己
+            notificationService.notifyUser(author.getUsername(), "COMMENT", "你的帖子被评论了：" + content, postId);
+        }
+
         return saved;
     }
 
     public List<Comment> getCommentsByPost(Long postId) {
         return commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
+    }
+
+    public NotificationService getNotificationService() {
+        return notificationService;
     }
 }
