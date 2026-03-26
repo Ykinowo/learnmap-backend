@@ -4,6 +4,7 @@ import com.example.learnmapbackend.controller.dto.ApiResponse;
 import com.example.learnmapbackend.controller.dto.PostRequest;
 import com.example.learnmapbackend.controller.dto.WeightedLatLngDTO;
 import com.example.learnmapbackend.entity.Post;
+import com.example.learnmapbackend.service.BrowseHistoryService;
 import com.example.learnmapbackend.service.LikeService;
 import com.example.learnmapbackend.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -57,16 +58,6 @@ public class PostController {
         }
     }
 
-    @GetMapping("/{postId}")
-    public ApiResponse<Post> getPost(@PathVariable Long postId) {
-        try {
-            Post post = postService.getPostById(postId);
-            return ApiResponse.success(post);
-        } catch (Exception e) {
-            return ApiResponse.error(e.getMessage());
-        }
-    }
-
     @PostMapping("/{postId}/like")
     public ApiResponse<Boolean> likePost(HttpServletRequest request, @PathVariable Long postId) {
         String username = (String) request.getAttribute("username");
@@ -100,6 +91,25 @@ public class PostController {
         try {
             List<WeightedLatLngDTO> data = postService.getHeatMapData();
             return ApiResponse.success(data);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
+
+    // 在 PostController 中添加
+    @Autowired
+    private BrowseHistoryService browseHistoryService;
+
+    @GetMapping("/{postId}")
+    public ApiResponse<Post> getPost(HttpServletRequest request, @PathVariable Long postId) {
+        String username = (String) request.getAttribute("username");
+        try {
+            Post post = postService.getPostById(postId);
+            // 记录浏览（如果用户已登录）
+            if (username != null) {
+                browseHistoryService.recordBrowse(username, postId);
+            }
+            return ApiResponse.success(post);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }
