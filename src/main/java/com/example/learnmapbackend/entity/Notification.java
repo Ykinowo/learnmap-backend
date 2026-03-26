@@ -1,10 +1,8 @@
 package com.example.learnmapbackend.entity;
 
-import lombok.Data;
 import javax.persistence.*;
 import java.util.Date;
 
-@Data
 @Entity
 @Table(name = "notifications")
 public class Notification {
@@ -14,16 +12,40 @@ public class Notification {
 
     @ManyToOne
     @JoinColumn(name = "user_id", nullable = false)
-    private User user;          // 接收通知的用户
+    private User user;
 
-    private String type;        // 类型：COMMENT, LIKE
+    private String type;
+    private String content;
+    private Long relatedId;
 
-    private String content;     // 消息内容
-
-    private Long relatedId;     // 关联的帖子ID
-
-    private boolean read;       // 是否已读
+    // 注意：read 是 MySQL 保留字，需要用反引号包裹列名
+    @Column(name = "`read`")
+    private boolean read;
 
     @Column(name = "created_at")
     private Date createdAt = new Date();
+
+    public Notification() {}
+
+    // getters and setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+
+    public User getUser() { return user; }
+    public void setUser(User user) { this.user = user; }
+
+    public String getType() { return type; }
+    public void setType(String type) { this.type = type; }
+
+    public String getContent() { return content; }
+    public void setContent(String content) { this.content = content; }
+
+    public Long getRelatedId() { return relatedId; }
+    public void setRelatedId(Long relatedId) { this.relatedId = relatedId; }
+
+    public boolean isRead() { return read; }
+    public void setRead(boolean read) { this.read = read; }
+
+    public Date getCreatedAt() { return createdAt; }
+    public void setCreatedAt(Date createdAt) { this.createdAt = createdAt; }
 }

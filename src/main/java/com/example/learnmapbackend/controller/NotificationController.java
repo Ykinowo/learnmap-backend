@@ -21,7 +21,7 @@ public class NotificationController {
     @Autowired
     private UserService userService;
 
-    // 获取当前用户的所有通知
+    // 获取当前用户的所有通知（按时间倒序）
     @GetMapping
     public ApiResponse<List<Notification>> getNotifications(HttpServletRequest request) {
         String username = (String) request.getAttribute("username");
@@ -40,9 +40,9 @@ public class NotificationController {
     // 标记通知为已读
     @PutMapping("/{id}/read")
     public ApiResponse<Void> markAsRead(@PathVariable Long id) {
-        notificationRepository.findById(id).ifPresent(noti -> {
-            noti.setRead(true);
-            notificationRepository.save(noti);
+        notificationRepository.findById(id).ifPresent(notification -> {
+            notification.setRead(true);
+            notificationRepository.save(notification);
         });
         return ApiResponse.success(null);
     }
