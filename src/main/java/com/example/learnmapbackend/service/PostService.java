@@ -94,5 +94,6 @@ public class PostService {
         favoriteRepository.deleteByPostId(postId);
         // 4. 最后删除帖子
         postRepository.delete(post);
+
     }
 }
