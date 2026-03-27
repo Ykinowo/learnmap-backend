@@ -115,4 +115,17 @@ public class PostController {
             return ApiResponse.error(e.getMessage());
         }
     }
+    @DeleteMapping("/{postId}")
+    public ApiResponse<Void> deletePost(HttpServletRequest request, @PathVariable Long postId) {
+        String username = (String) request.getAttribute("username");
+        if (username == null) {
+            return ApiResponse.error("未登录");
+        }
+        try {
+            postService.deletePost(username, postId);
+            return ApiResponse.success(null);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
 }

@@ -3,8 +3,7 @@ package com.example.learnmapbackend.service;
 import com.example.learnmapbackend.controller.dto.WeightedLatLngDTO;
 import com.example.learnmapbackend.entity.Post;
 import com.example.learnmapbackend.entity.User;
-import com.example.learnmapbackend.repository.PostRepository;
-import com.example.learnmapbackend.repository.UserRepository;
+import com.example.learnmapbackend.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -72,5 +71,28 @@ public class PostService {
             heatData.add(dto);
         }
         return heatData;
+    }
+
+    @Autowired
+    private CommentRepository commentRepository;
+    @Autowired
+    private LikeRepository likeRepository;
+    @Autowired
+    private FavoriteRepository favoriteRepository;
+
+    public void deletePost(String username, Long postId) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        if (!post.getUser().getUsername().equals(username)) {
+            throw new RuntimeException("无权删除此帖子");
+        }
+        // 1. 删除评论
+        commentRepository.deleteByPostId(postId);
+        // 2. 删除点赞
+        likeRepository.deleteByPostId(postId);
+        // 3. 删除收藏
+        favoriteRepository.deleteByPostId(postId);
+        // 4. 最后删除帖子
+        postRepository.delete(post);
     }
 }
