@@ -45,35 +45,12 @@ public class PostService {
 
     public List<Post> getPosts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        List<Post> posts = postRepository.findAllByOrderByCreatedAtDesc(pageable);
-        // 对每个帖子处理匿名
-        for (Post post : posts) {
-            if (post.isAnonymous()) {
-                anonymizePostUser(post);
-            }
-        }
-        return posts;
+        return postRepository.findAllByOrderByCreatedAtDesc(pageable);
     }
 
     public Post getPostById(Long postId) {
-        Post post = postRepository.findById(postId)
+        return postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
-        if (post.isAnonymous()) {
-            anonymizePostUser(post);
-        }
-        return post;
-    }
-
-    private void anonymizePostUser(Post post) {
-        User anonymous = new User();
-        anonymous.setId(0L);
-        anonymous.setUsername("匿名用户");
-        anonymous.setEmail(null);
-        anonymous.setAvatar(null);
-        anonymous.setBio(null);
-        post.setUser(anonymous);
-        // 可选：打印日志确认
-        System.out.println("Anonymized post " + post.getId() + " user to 匿名用户");
     }
 
     public List<WeightedLatLngDTO> getHeatMapData() {

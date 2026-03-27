@@ -1,5 +1,6 @@
 package com.example.learnmapbackend.entity;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.Data;
 import javax.persistence.*;
 import java.util.Date;
@@ -25,11 +26,12 @@ public class Post {
     private Double latitude;
     private Double longitude;
 
-    private String imageUrls; // 用逗号分隔多个图片URL，或用JSON
+    private String imageUrls;
 
-    private String tags;      // 用逗号分隔多个标签
+    private String tags;
 
     @Column(name = "is_anonymous")
+    @JsonProperty("isAnonymous")   // 新增：指定序列化后的字段名
     private boolean isAnonymous = false;
 
     @Column(name = "like_count")
