@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class PostService {
@@ -95,5 +96,46 @@ public class PostService {
         // 4. 最后删除帖子
         postRepository.delete(post);
 
+    }
+
+    // 在 PostService 中添加以下方法
+
+    /**
+     * 统计各标签的帖子数量（一个帖子有多个标签则每个标签都计数）
+     */
+    public Map<String, Integer> getTagStats() {
+        List<Post> allPosts = postRepository.findAll();
+        Map<String, Integer> tagCount = new HashMap<>();
+        for (Post post : allPosts) {
+            if (post.getTags() != null && !post.getTags().isBlank()) {
+                String[] tags = post.getTags().split(",");
+                for (String tag : tags) {
+                    String trimmed = tag.trim();
+                    if (!trimmed.isEmpty()) {
+                        tagCount.put(trimmed, tagCount.getOrDefault(trimmed, 0) + 1);
+                    }
+                }
+            }
+        }
+        return tagCount;
+    }
+
+    /**
+     * 统计各地点的帖子数量，返回前 topN 个地点
+     */
+    public List<Map.Entry<String, Integer>> getLocationStats(int topN) {
+        List<Post> allPosts = postRepository.findAll();
+        Map<String, Integer> locationCount = new HashMap<>();
+        for (Post post : allPosts) {
+            if (post.getLocationName() != null && !post.getLocationName().isBlank()) {
+                String loc = post.getLocationName();
+                locationCount.put(loc, locationCount.getOrDefault(loc, 0) + 1);
+            }
+        }
+        // 按数量降序排序，取前 topN
+        return locationCount.entrySet().stream()
+                .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
+                .limit(topN)
+                .collect(Collectors.toList());
     }
 }
