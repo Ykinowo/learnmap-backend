@@ -1,6 +1,7 @@
 package com.example.learnmapbackend.controller;
 
 import com.example.learnmapbackend.controller.dto.ApiResponse;
+import com.example.learnmapbackend.controller.dto.LocationStatDTO;
 import com.example.learnmapbackend.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -29,9 +30,9 @@ public class StatsController {
     }
 
     @GetMapping("/locations")
-    public ApiResponse<List<Map.Entry<String, Integer>>> getLocationStats(@RequestParam(defaultValue = "3") int top) {
+    public ApiResponse<List<LocationStatDTO>> getLocationStats(@RequestParam(defaultValue = "3") int top) {
         try {
-            List<Map.Entry<String, Integer>> stats = postService.getLocationStats(top);
+            List<LocationStatDTO> stats = postService.getLocationStats(top);
             return ApiResponse.success(stats);
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());

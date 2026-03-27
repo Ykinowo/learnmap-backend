@@ -1,5 +1,6 @@
 package com.example.learnmapbackend.service;
 
+import com.example.learnmapbackend.controller.dto.LocationStatDTO;
 import com.example.learnmapbackend.controller.dto.WeightedLatLngDTO;
 import com.example.learnmapbackend.entity.Post;
 import com.example.learnmapbackend.entity.User;
@@ -123,19 +124,25 @@ public class PostService {
     /**
      * 统计各地点的帖子数量，返回前 topN 个地点
      */
-    public List<Map.Entry<String, Integer>> getLocationStats(int topN) {
+    public List<LocationStatDTO> getLocationStats(int topN) {
         List<Post> allPosts = postRepository.findAll();
         Map<String, Integer> locationCount = new HashMap<>();
         for (Post post : allPosts) {
-            if (post.getLocationName() != null && !post.getLocationName().isBlank()) {
-                String loc = post.getLocationName();
-                locationCount.put(loc, locationCount.getOrDefault(loc, 0) + 1);
+            String loc = post.getLocationName();
+            if (loc == null || loc.isBlank()) {
+                loc = "未知地点";
             }
+            locationCount.put(loc, locationCount.getOrDefault(loc, 0) + 1);
         }
-        // 按数量降序排序，取前 topN
         return locationCount.entrySet().stream()
                 .sorted(Map.Entry.<String, Integer>comparingByValue().reversed())
                 .limit(topN)
+                .map(entry -> {
+                    LocationStatDTO dto = new LocationStatDTO();
+                    dto.setLocation(entry.getKey());
+                    dto.setCount(entry.getValue());
+                    return dto;
+                })
                 .collect(Collectors.toList());
     }
 }
