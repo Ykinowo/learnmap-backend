@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>管理端 - 用户管理</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body { margin: 0; padding: 0; }
+        .sidebar {
+            position: fixed; top: 0; left: 0; width: 260px; height: 100%;
+            background-color: #2c3e50; color: #ecf0f1; transition: all 0.3s; z-index: 1000; overflow-y: auto;
+        }
+        .sidebar .nav-header { padding: 20px; font-size: 20px; font-weight: bold; border-bottom: 1px solid #34495e; }
+        .sidebar .nav-item { padding: 12px 20px; display: block; color: #ecf0f1; text-decoration: none; transition: 0.3s; }
+        .sidebar .nav-item:hover { background-color: #34495e; color: white; }
+        .sidebar .nav-item.active { background-color: #1abc9c; color: white; }
+        .sidebar .nav-group { font-weight: bold; padding: 12px 20px; background-color: #1e2a36; margin-top: 8px; }
+        .sidebar .nav-subitem { padding-left: 40px; font-size: 14px; }
+        .content { margin-left: 260px; padding: 20px; }
+        .top-bar { background-color: #fff; padding: 10px 20px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .admin-info { display: flex; align-items: center; gap: 15px; }
+        .logout-btn { color: #e74c3c; cursor: pointer; text-decoration: none; }
+        .status-badge { padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; }
+        .status-normal { background-color: #4CAF50; color: white; }
+        .status-muted { background-color: #FF9800; color: white; }
+        .status-banned { background-color: #F44336; color: white; }
+        .btn-sm { margin: 0 2px; }
+    </style>
+</head>
+<body>
+<div class="sidebar">
+    <div class="nav-header">学友所图 管理后台</div>
+    <a href="/admin/dashboard" class="nav-item">数据看板</a>
+    <div class="nav-group">用户与内容管理</div>
+    <a href="/admin/users" class="nav-item nav-subitem active">用户管理</a>
+    <a href="#" class="nav-item nav-subitem" id="contentReviewLink">内容审核</a>
+    <div class="nav-group">系统管理与运维</div>
+    <a href="/admin/posts" class="nav-item nav-subitem">校方通知管理</a>
+    <a href="#" class="nav-item nav-subitem" id="tagManageLink">标签管理</a>
+    <a href="#" class="nav-item nav-subitem" id="adminManageLink">管理员管理</a>
+</div>
+
+<div class="content">
+    <div class="top-bar">
+        <h3>用户管理</h3>
+        <div class="admin-info">
+            <span>当前管理员：<span th:text="${session.adminUsername}">admin</span></span>
+            <a href="/admin/logout" class="logout-btn">退出登录</a>
+        </div>
+    </div>
+
+    <div class="row mb-3">
+        <div class="col-md-4">
+            <input type="text" id="searchKeyword" class="form-control" placeholder="搜索用户名">
+        </div>
+        <div class="col-md-2">
+            <button id="searchBtn" class="btn btn-primary">搜索</button>
+        </div>
+    </div>
+
+    <div id="userList"></div>
+</div>
+
+<script>
+    let currentPage = 0;
+    let keyword = '';
+
+    function loadUsers() {
+        $.get("/api/admin/users", {
+            page: currentPage,
+            size: 10,
+            keyword: keyword
+        }, function(response) {
+            if (response.success) {
+                renderUsers(response.data);
+                renderPagination(response.data);
+            } else {
+                alert(response.message);
+            }
+        });
+    }
+
+    function renderUsers(data) {
+        let users = data.users;
+        let html = '<table class="table table-bordered table-striped">';
+        html += '<thead><tr><th>ID</th><th>用户名</th><th>邮箱</th><th>注册时间</th><th>状态</th><th>操作</th></thead><tbody>';
+        users.forEach(user => {
+            let statusClass = '';
+            if (user.status === 'normal') statusClass = 'status-normal';
+            else if (user.status === 'muted') statusClass = 'status-muted';
+            else if (user.status === 'banned') statusClass = 'status-banned';
+
+            html += `<tr>
+                        <td>${user.id}</td>
+                        <td>${user.username}</td>
+                        <td>${user.email || '未设置'}</td>
+                        <td>${new Date(user.createdAt).toLocaleString()}</td>
+                        <td><span class="status-badge ${statusClass}">${getStatusText(user.status)}</span></td>
+                        <td>
+                            <button class="btn btn-sm btn-warning" onclick="changeStatus(${user.id}, 'muted')">禁言</button>
+                            <button class="btn btn-sm btn-danger" onclick="changeStatus(${user.id}, 'banned')">封禁</button>
+                            <button class="btn btn-sm btn-success" onclick="changeStatus(${user.id}, 'normal')">解除</button>
+                         </td>
+                     </tr>`;
+        });
+        html += '</tbody></table>';
+        $("#userList").html(html);
+    }
+
+    function getStatusText(status) {
+        if (status === 'normal') return '正常';
+        if (status === 'muted') return '禁言';
+        if (status === 'banned') return '封禁';
+        return status;
+    }
+
+    function renderPagination(data) {
+        let totalPages = data.totalPages;
+        let current = data.currentPage;
+        let html = '<nav><ul class="pagination">';
+        for (let i = 0; i < totalPages; i++) {
+            let active = (i === current) ? 'active' : '';
+            html += `<li class="page-item ${active}"><a class="page-link" href="#" onclick="goToPage(${i}); return false;">${i+1}</a></li>`;
+        }
+        html += '</ul></nav>';
+        $("#userList").append(html);
+    }
+
+    function goToPage(page) {
+        currentPage = page;
+        loadUsers();
+    }
+
+    function changeStatus(userId, status) {
+        if (confirm(`确定要将该用户状态改为 ${getStatusText(status)} 吗？`)) {
+            $.ajax({
+                url: `/api/admin/users/${userId}/status`,
+                type: 'PUT',
+                data: { status: status },
+                success: function(response) {
+                    if (response.success) {
+                        loadUsers();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert("请求失败");
+                }
+            });
+        }
+    }
+
+    $("#searchBtn").click(function() {
+        keyword = $("#searchKeyword").val();
+        currentPage = 0;
+        loadUsers();
+    });
+
+    $(document).ready(function() {
+        loadUsers();
+    });
+</script>
+</body>
+</html>

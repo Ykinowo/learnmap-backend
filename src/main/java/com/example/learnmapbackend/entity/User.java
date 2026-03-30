@@ -26,4 +26,7 @@ public class User {
 
     @Column(name = "created_at")
     private Date createdAt = new Date();
+
+    @Column(name = "status")
+    private String status = "normal"; // normal: 正常, muted: 禁言, banned: 封禁
 }

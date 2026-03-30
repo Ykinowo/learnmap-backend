@@ -2,34 +2,221 @@
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
-    <title>管理端</title>
+    <title>管理端 - 数据看板</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        /* 侧边栏样式 */
+        .sidebar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 260px;
+            height: 100%;
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            transition: all 0.3s;
+            z-index: 1000;
+            overflow-y: auto;
+        }
+        .sidebar .nav-header {
+            padding: 20px;
+            font-size: 20px;
+            font-weight: bold;
+            border-bottom: 1px solid #34495e;
+        }
+        .sidebar .nav-item {
+            padding: 12px 20px;
+            display: block;
+            color: #ecf0f1;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+        .sidebar .nav-item:hover {
+            background-color: #34495e;
+            color: white;
+        }
+        .sidebar .nav-item.active {
+            background-color: #1abc9c;
+            color: white;
+        }
+        .sidebar .nav-group {
+            font-weight: bold;
+            padding: 12px 20px;
+            background-color: #1e2a36;
+            margin-top: 8px;
+        }
+        .sidebar .nav-subitem {
+            padding-left: 40px;
+            font-size: 14px;
+        }
+        /* 内容区 */
+        .content {
+            margin-left: 260px;
+            padding: 20px;
+        }
+        /* 顶部栏 */
+        .top-bar {
+            background-color: #fff;
+            padding: 10px 20px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        .admin-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        .logout-btn {
+            color: #e74c3c;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .card-stats { margin-bottom: 20px; }
+        .chart-container { height: 300px; margin-bottom: 30px; }
+    </style>
 </head>
 <body>
-<div class="container mt-4">
-    <h2>管理端首页</h2>
+<!-- 侧边栏 -->
+<div class="sidebar">
+    <div class="nav-header">学友所图 管理后台</div>
+    <a href="/admin/dashboard" class="nav-item active">数据看板</a>
+    <div class="nav-group">用户与内容管理</div>
+    <a href="/admin/users" class="nav-item nav-subitem">用户管理</a>
+    <a href="#" class="nav-item nav-subitem" id="contentReviewLink">内容审核</a>
+    <div class="nav-group">系统管理与运维</div>
+    <a href="/admin/posts" class="nav-item nav-subitem">校方通知管理</a>
+    <a href="#" class="nav-item nav-subitem" id="tagManageLink">标签管理</a>
+    <a href="#" class="nav-item nav-subitem" id="adminManageLink">管理员管理</a>
+</div>
+
+<!-- 内容区 -->
+<div class="content">
+    <div class="top-bar">
+        <h3>数据看板</h3>
+        <div class="admin-info">
+            <span>当前管理员：<span th:text="${session.adminUsername}">admin</span></span>
+            <a href="/admin/logout" class="logout-btn">退出登录</a>
+        </div>
+    </div>
+
+    <!-- 实时数据卡片 -->
     <div class="row">
-        <div class="col-md-4">
-            <div class="card">
+        <div class="col-md-3">
+            <div class="card text-white bg-primary card-stats">
                 <div class="card-body">
-                    <h5 class="card-title">发布校方通知</h5>
-                    <p class="card-text">发布新的校方通知，将出现在App的校方通知板块。</p>
-                    <a href="/admin/publish" class="btn btn-primary">去发布</a>
+                    <h5 class="card-title">在线用户数</h5>
+                    <p class="card-text display-6" id="onlineUsers">0</p>
                 </div>
             </div>
         </div>
-        <div class="col-md-4">
-            <div class="card">
+        <div class="col-md-3">
+            <div class="card text-white bg-success card-stats">
                 <div class="card-body">
-                    <h5 class="card-title">通知列表</h5>
-                    <p class="card-text">查看、编辑或删除已发布的校方通知。</p>
-                    <a href="/admin/posts" class="btn btn-primary">查看列表</a>
+                    <h5 class="card-title">今日帖子数</h5>
+                    <p class="card-text display-6" id="todayPosts">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-warning card-stats">
+                <div class="card-body">
+                    <h5 class="card-title">今日评论数</h5>
+                    <p class="card-text display-6" id="todayComments">0</p>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card text-white bg-info card-stats">
+                <div class="card-body">
+                    <h5 class="card-title">活跃用户占比</h5>
+                    <p class="card-text display-6" id="activeRatio">0%</p>
                 </div>
             </div>
         </div>
     </div>
-    <hr>
-    <a href="/admin/logout" class="btn btn-secondary">退出登录</a>
+
+    <!-- 帖子/评论趋势图 -->
+    <div class="card">
+        <div class="card-header">业务数据报表（帖子/评论趋势）</div>
+        <div class="card-body">
+            <div id="trendChart" class="chart-container"></div>
+        </div>
+    </div>
+
+    <!-- 用户行为分析图 -->
+    <div class="card mt-4">
+        <div class="card-header">用户行为分析（访问用户数趋势）</div>
+        <div class="card-body">
+            <div id="userChart" class="chart-container"></div>
+        </div>
+    </div>
 </div>
+
+<script>
+    function loadRealtimeStats() {
+        $.get("/api/admin/stats/realtime", function(response) {
+            if (response.success) {
+                $("#onlineUsers").text(response.data.onlineUsers);
+                $("#todayPosts").text(response.data.todayPosts);
+                $("#todayComments").text(response.data.todayComments);
+                $("#activeRatio").text(response.data.activeRatio);
+            }
+        });
+    }
+
+    function loadTrendChart() {
+        $.get("/api/admin/stats/post-trend", function(response) {
+            if (response.success) {
+                var data = response.data;
+                var chart = echarts.init(document.getElementById('trendChart'));
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['帖子数', '评论数'] },
+                    xAxis: { type: 'category', data: data.dates },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '帖子数', type: 'line', data: data.posts, smooth: true },
+                        { name: '评论数', type: 'line', data: data.comments, smooth: true }
+                    ]
+                });
+            }
+        });
+    }
+
+    function loadUserChart() {
+        $.get("/api/admin/stats/user-trend", function(response) {
+            if (response.success) {
+                var data = response.data;
+                var chart = echarts.init(document.getElementById('userChart'));
+                chart.setOption({
+                    tooltip: { trigger: 'axis' },
+                    legend: { data: ['访问用户数'] },
+                    xAxis: { type: 'category', data: data.dates },
+                    yAxis: { type: 'value' },
+                    series: [
+                        { name: '访问用户数', type: 'bar', data: data.users, itemStyle: { color: '#4CAF50' } }
+                    ]
+                });
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        loadRealtimeStats();
+        loadTrendChart();
+        loadUserChart();
+        setInterval(loadRealtimeStats, 30000);
+    });
+</script>
 </body>
 </html>

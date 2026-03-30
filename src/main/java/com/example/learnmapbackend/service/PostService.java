@@ -31,6 +31,17 @@ public class PostService {
                            String tags, boolean isAnonymous, String imageUrls,String type) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        if (!"normal".equals(user.getStatus())) {
+            if ("muted".equals(user.getStatus())) {
+                throw new RuntimeException("账号已被禁言，无法发帖");
+            } else if ("banned".equals(user.getStatus())) {
+                throw new RuntimeException("账号已被封禁，无法发帖");
+            } else {
+                throw new RuntimeException("账号状态异常，请联系管理员");
+            }
+        }
+
         Post post = new Post();
         post.setUser(user);
         post.setTitle(title);

@@ -6,14 +6,18 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
 </head>
 <body class="bg-light">
-<div class="container mt-5">
+<div class="container" style="margin-top: 100px;">
     <div class="row justify-content-center">
-        <div class="col-md-6">
+        <div class="col-md-4">
             <div class="card">
-                <div class="card-header">
-                    <h3>管理端登录</h3>
+                <div class="card-header text-center">
+                    <h4>管理端登录</h4>
                 </div>
                 <div class="card-body">
+                    <!-- 固定错误提示，避免乱码 -->
+                    <div th:if="${param.error}" class="alert alert-danger">
+                        用户名或密码错误，或您无权登录管理端
+                    </div>
                     <form method="post" action="/admin/login">
                         <div class="mb-3">
                             <label>用户名</label>
@@ -23,9 +27,8 @@
                             <label>密码</label>
                             <input type="password" name="password" class="form-control" required>
                         </div>
-                        <button type="submit" class="btn btn-primary">登录</button>
+                        <button type="submit" class="btn btn-primary w-100">登录</button>
                     </form>
-                    <div th:if="${param.error}" class="alert alert-danger mt-3" th:text="${param.error[0]}"></div>
                 </div>
             </div>
         </div>

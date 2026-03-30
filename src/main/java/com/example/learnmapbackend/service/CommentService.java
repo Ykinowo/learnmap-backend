@@ -29,6 +29,18 @@ public class CommentService {
     public Comment addComment(String username, Long postId, String content, Long parentId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        // 禁言或封禁用户禁止评论
+        if (!"normal".equals(user.getStatus())) {
+            if ("muted".equals(user.getStatus())) {
+                throw new RuntimeException("账号已被禁言，无法评论");
+            } else if ("banned".equals(user.getStatus())) {
+                throw new RuntimeException("账号已被封禁，无法评论");
+            } else {
+                throw new RuntimeException("账号状态异常，请联系管理员");
+            }
+        }
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
         Comment comment = new Comment();
@@ -41,9 +53,8 @@ public class CommentService {
         post.setCommentCount(post.getCommentCount() + 1);
         postRepository.save(post);
 
-        // 通知帖子作者（如果不是自己）
         User author = post.getUser();
-        if (!author.getUsername().equals(username)) { // 不是自己评论自己
+        if (!author.getUsername().equals(username)) {
             notificationService.notifyUser(author.getUsername(), "COMMENT", "你的帖子被评论了：" + content, postId);
         }
 
@@ -52,9 +63,5 @@ public class CommentService {
 
     public List<Comment> getCommentsByPost(Long postId) {
         return commentRepository.findByPostIdOrderByCreatedAtAsc(postId);
-    }
-
-    public NotificationService getNotificationService() {
-        return notificationService;
     }
 }

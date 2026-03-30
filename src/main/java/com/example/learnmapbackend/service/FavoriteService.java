@@ -22,22 +22,28 @@ public class FavoriteService {
     @Autowired
     private UserRepository userRepository;
 
-    @Transactional  // 添加这一行
+    @Transactional
     public boolean toggleFavorite(String username, Long postId) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
+
+        // 封禁用户无法收藏（但封禁用户已无法登录，这个检查可省略，保留以作防御）
+        if ("banned".equals(user.getStatus())) {
+            throw new RuntimeException("账号已被封禁，无法收藏");
+        }
+
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
 
         if (favoriteRepository.existsByUserIdAndPostId(user.getId(), postId)) {
             favoriteRepository.deleteByUserIdAndPostId(user.getId(), postId);
-            return false; // 取消收藏
+            return false;
         } else {
             Favorite favorite = new Favorite();
             favorite.setUser(user);
             favorite.setPost(post);
             favoriteRepository.save(favorite);
-            return true; // 收藏成功
+            return true;
         }
     }
 

@@ -33,6 +33,7 @@ public class AuthController {
             response.setUserId(user.getId());
             response.setUsername(user.getUsername());
             response.setAvatar(user.getAvatar());
+            response.setStatus(user.getStatus());
             return ApiResponse.success(response);
         } catch (RuntimeException e) {
             return ApiResponse.error(e.getMessage());

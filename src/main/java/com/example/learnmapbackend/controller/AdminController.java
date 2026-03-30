@@ -39,18 +39,15 @@ public class AdminController {
                           @RequestParam String password,
                           HttpSession session) {
         try {
-            // 调用已有的登录方法验证用户名密码
             String token = userService.login(username, password);
-            // 简单判断：用户名包含 "admin" 即为管理员（你可以根据实际修改）
             if (!username.contains("admin")) {
-                return "redirect:/admin/login?error=无权登录";
+                return "redirect:/admin/login?error=1";  // 只传递标志，不传消息
             }
-            // 存储登录信息到 Session
             session.setAttribute("adminToken", token);
             session.setAttribute("adminUsername", username);
             return "redirect:/admin/dashboard";
         } catch (RuntimeException e) {
-            return "redirect:/admin/login?error=" + e.getMessage();
+            return "redirect:/admin/login?error=1";  // 只传递标志
         }
     }
 
@@ -170,4 +167,58 @@ public class AdminController {
             return "redirect:/admin/posts?error=" + e.getMessage();
         }
     }
+
+    @GetMapping("/logout")
+    public String logout(HttpSession session) {
+        session.invalidate();
+        return "redirect:/admin/login";
+    }
+
+    @GetMapping("/users")
+    public String usersPage(HttpSession session) {
+        if (session.getAttribute("adminToken") == null) {
+            return "redirect:/admin/login";
+        }
+        return "admin/users";
+    }
+
+    @GetMapping("/posts/detail/{id}")
+    public String postDetail(@PathVariable Long id, Model model, HttpSession session) {
+        if (session.getAttribute("adminToken") == null) {
+            return "redirect:/admin/login";
+        }
+        Post post = postRepository.findById(id).orElse(null);
+        if (post == null) {
+            return "redirect:/admin/posts?error=帖子不存在";
+        }
+        model.addAttribute("post", post);
+        return "admin/detail";
+    }
+
+    @GetMapping("/content-review")
+    public String contentReviewPage(HttpSession session) {
+        if (session.getAttribute("adminToken") == null) {
+            return "redirect:/admin/login";
+        }
+        return "admin/content-review";
+    }
+
+    @GetMapping("/tag-manage")
+    public String tagManagePage(HttpSession session) {
+        if (session.getAttribute("adminToken") == null) {
+            return "redirect:/admin/login";
+        }
+        return "admin/tag-manage";
+    }
+
+    @GetMapping("/admin-manage")
+    public String adminManagePage(HttpSession session) {
+        if (session.getAttribute("adminToken") == null) {
+            return "redirect:/admin/login";
+        }
+        return "admin/admin-manage";
+    }
+
+
 }
+

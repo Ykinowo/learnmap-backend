@@ -21,9 +21,10 @@ public class UserService {
         }
         User user = new User();
         user.setUsername(username);
-        user.setPassword(password); // 实际应加密，这里简化
+        user.setPassword(password);
         user.setEmail(email);
         user.setBio("这个人很懒，什么都没写");
+        user.setStatus("normal"); // 新增状态，默认正常
         return userRepository.save(user);
     }
 
@@ -33,6 +34,11 @@ public class UserService {
         if (!user.getPassword().equals(password)) {
             throw new RuntimeException("密码错误");
         }
+        // 封禁用户无法登录
+        if ("banned".equals(user.getStatus())) {
+            throw new RuntimeException("账号已被封禁，无法登录");
+        }
+        // 禁言用户允许登录
         return jwtUtil.generateToken(username);
     }
 
