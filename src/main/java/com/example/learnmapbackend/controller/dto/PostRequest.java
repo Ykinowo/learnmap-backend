@@ -14,4 +14,5 @@ public class PostRequest {
     @JsonProperty("isAnonymous")
     private boolean isAnonymous;
     private String imageUrls;
+    private String type = "normal";  // 默认帖子类型普通
 }

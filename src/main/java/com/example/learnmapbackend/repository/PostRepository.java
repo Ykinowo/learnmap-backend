@@ -6,6 +6,6 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface PostRepository extends JpaRepository<Post, Long> {
-    List<Post> findByUserIdOrderByCreatedAtDesc(Long userId, Pageable pageable);
     List<Post> findAllByOrderByCreatedAtDesc(Pageable pageable);
+    List<Post> findByTypeOrderByCreatedAtDesc(String type, Pageable pageable);
 }

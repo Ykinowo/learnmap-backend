@@ -4,10 +4,14 @@ import com.example.learnmapbackend.controller.dto.ApiResponse;
 import com.example.learnmapbackend.controller.dto.PostRequest;
 import com.example.learnmapbackend.controller.dto.WeightedLatLngDTO;
 import com.example.learnmapbackend.entity.Post;
+import com.example.learnmapbackend.repository.PostRepository;
 import com.example.learnmapbackend.service.BrowseHistoryService;
 import com.example.learnmapbackend.service.LikeService;
 import com.example.learnmapbackend.service.PostService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
@@ -31,6 +35,7 @@ public class PostController {
             return ApiResponse.error("未登录");
         }
         try {
+            String type = postRequest.getType();
             Post post = postService.createPost(
                             username,
                             postRequest.getTitle(),
@@ -40,7 +45,8 @@ public class PostController {
                             postRequest.getLongitude(),
                             postRequest.getTags(),
                             postRequest.isAnonymous(),
-                            postRequest.getImageUrls()   // 传入
+                            postRequest.getImageUrls(),  // 传入
+                            type
             );
             return ApiResponse.success(post);
         } catch (Exception e) {
@@ -127,5 +133,13 @@ public class PostController {
         } catch (Exception e) {
             return ApiResponse.error(e.getMessage());
         }
+    }
+    @GetMapping("/official")
+    public ApiResponse<List<Post>> getOfficialPosts(@RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "10") int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        PostRepository postRepository = null;
+        List<Post> posts = postRepository.findByTypeOrderByCreatedAtDesc("official", pageable);
+        return ApiResponse.success(posts);
     }
 }

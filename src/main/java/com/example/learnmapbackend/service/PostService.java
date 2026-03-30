@@ -28,7 +28,7 @@ public class PostService {
 
     public Post createPost(String username, String title, String content,
                            String locationName, Double latitude, Double longitude,
-                           String tags, boolean isAnonymous, String imageUrls) {
+                           String tags, boolean isAnonymous, String imageUrls,String type) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
         Post post = new Post();
@@ -41,6 +41,7 @@ public class PostService {
         post.setTags(tags);
         post.setAnonymous(isAnonymous);
         post.setImageUrls(imageUrls);
+        post.setType(type != null ? type : "normal");
         return postRepository.save(post);
     }
 

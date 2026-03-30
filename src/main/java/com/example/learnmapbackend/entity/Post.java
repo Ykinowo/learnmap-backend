@@ -45,4 +45,7 @@ public class Post {
 
     @Column(name = "updated_at")
     private Date updatedAt = new Date();
+
+    @Column(name = "type")
+    private String type = "normal";  // 默认普通帖子
 }
