@@ -13,4 +13,6 @@ public interface UserRepository extends JpaRepository<User, Long> {
     Optional<User> findByUsername(String username);
 
     Page<User> findByUsernameContaining(String username, Pageable pageable);
+
+    Page<User> findByRole(String role, Pageable pageable);  // 查询管理员
 }

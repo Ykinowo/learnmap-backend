@@ -40,7 +40,9 @@ public class AdminController {
                           HttpSession session) {
         try {
             String token = userService.login(username, password);
-            if (!username.contains("admin")) {
+            com.example.learnmapbackend.entity.User user = userService.getUserByUsername(username);
+            // 只有角色为 admin 的管理员才能登录管理端
+            if (!"admin".equals(user.getRole())) {
                 return "redirect:/admin/login?error=1";
             }
             session.setAttribute("adminToken", token);
@@ -231,4 +233,6 @@ public class AdminController {
         }
         return "admin/admin-manage";
     }
+
+
 }

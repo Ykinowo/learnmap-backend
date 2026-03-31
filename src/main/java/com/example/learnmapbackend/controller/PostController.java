@@ -27,9 +27,15 @@ public class PostController {
     @Autowired
     private LikeService likeService;
 
+    @Autowired
+    private PostRepository postRepository;  // 注意：添加注入
+
+    @Autowired
+    private BrowseHistoryService browseHistoryService;
+
     @PostMapping
     public ApiResponse<Post> createPost(HttpServletRequest request, @RequestBody PostRequest postRequest) {
-        System.out.println("Received postRequest: " + postRequest);     // 添加打印
+        System.out.println("Received postRequest: " + postRequest);
         String username = (String) request.getAttribute("username");
         if (username == null) {
             return ApiResponse.error("未登录");
@@ -37,16 +43,16 @@ public class PostController {
         try {
             String type = postRequest.getType();
             Post post = postService.createPost(
-                            username,
-                            postRequest.getTitle(),
-                            postRequest.getContent(),
-                            postRequest.getLocationName(),
-                            postRequest.getLatitude(),
-                            postRequest.getLongitude(),
-                            postRequest.getTags(),
-                            postRequest.isAnonymous(),
-                            postRequest.getImageUrls(),  // 传入
-                            type
+                    username,
+                    postRequest.getTitle(),
+                    postRequest.getContent(),
+                    postRequest.getLocationName(),
+                    postRequest.getLatitude(),
+                    postRequest.getLongitude(),
+                    postRequest.getTags(),
+                    postRequest.isAnonymous(),
+                    postRequest.getImageUrls(),
+                    type
             );
             return ApiResponse.success(post);
         } catch (Exception e) {
@@ -103,16 +109,11 @@ public class PostController {
         }
     }
 
-    // 在 PostController 中添加
-    @Autowired
-    private BrowseHistoryService browseHistoryService;
-
     @GetMapping("/{postId}")
     public ApiResponse<Post> getPost(HttpServletRequest request, @PathVariable Long postId) {
         String username = (String) request.getAttribute("username");
         try {
             Post post = postService.getPostById(postId);
-            // 记录浏览（如果用户已登录）
             if (username != null) {
                 browseHistoryService.recordBrowse(username, postId);
             }
@@ -121,6 +122,7 @@ public class PostController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
     @DeleteMapping("/{postId}")
     public ApiResponse<Void> deletePost(HttpServletRequest request, @PathVariable Long postId) {
         String username = (String) request.getAttribute("username");
@@ -135,13 +137,12 @@ public class PostController {
         }
     }
 
-
     @GetMapping("/official")
     public ApiResponse<List<Post>> getOfficialPosts(@RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "10") int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        PostRepository postRepository = null;
-        List<Post> posts = postRepository.findByTypeOrderByCreatedAtDesc("official", pageable);
+        // 修复：使用注入的 postRepository，并只返回 type='official' 且 reviewStatus='approved' 的帖子
+        List<Post> posts = postRepository.findByTypeAndReviewStatusOrderByCreatedAtDesc("official", "approved", pageable);
         return ApiResponse.success(posts);
     }
 }

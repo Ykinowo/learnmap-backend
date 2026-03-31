@@ -29,4 +29,6 @@ public class User {
 
     @Column(name = "status")
     private String status = "normal"; // normal: 正常, muted: 禁言, banned: 封禁
+
+    private String role = "user";   // user 或 admin
 }
