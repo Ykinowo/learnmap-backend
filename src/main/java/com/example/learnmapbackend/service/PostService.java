@@ -10,11 +10,9 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -26,9 +24,18 @@ public class PostService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private CommentRepository commentRepository;
+
+    @Autowired
+    private LikeRepository likeRepository;
+
+    @Autowired
+    private FavoriteRepository favoriteRepository;
+
     public Post createPost(String username, String title, String content,
                            String locationName, Double latitude, Double longitude,
-                           String tags, boolean isAnonymous, String imageUrls,String type) {
+                           String tags, boolean isAnonymous, String imageUrls, String type) {
         User user = userRepository.findByUsername(username)
                 .orElseThrow(() -> new RuntimeException("用户不存在"));
 
@@ -53,21 +60,37 @@ public class PostService {
         post.setAnonymous(isAnonymous);
         post.setImageUrls(imageUrls);
         post.setType(type != null ? type : "normal");
+        // 设置审核状态：如果是校方通知直接通过，否则待审核
+        if ("official".equals(type)) {
+            post.setReviewStatus("approved");
+        } else {
+            post.setReviewStatus("pending");
+        }
         return postRepository.save(post);
     }
 
+    // 获取普通帖子列表（只返回审核通过的）
     public List<Post> getPosts(int page, int size) {
         Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
-        return postRepository.findAllByOrderByCreatedAtDesc(pageable);
+        return postRepository.findByTypeAndReviewStatusOrderByCreatedAtDesc("normal", "approved", pageable);
     }
 
     public Post getPostById(Long postId) {
-        return postRepository.findById(postId)
+        Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        // 如果帖子未审核通过且不是校方通知，普通用户无法查看（但管理员可以在管理端查看）
+        // 这里普通用户查看时，如果 reviewStatus != 'approved' 且 type != 'official'，则抛出异常
+        if (!"approved".equals(post.getReviewStatus()) && !"official".equals(post.getType())) {
+            throw new RuntimeException("帖子正在审核中");
+        }
+        return post;
     }
 
     public List<WeightedLatLngDTO> getHeatMapData() {
-        List<Post> posts = postRepository.findAll();
+        // 只获取审核通过的普通帖子 + 校方通知（校方通知直接通过）
+        List<Post> posts = postRepository.findAll().stream()
+                .filter(p -> "approved".equals(p.getReviewStatus()) || "official".equals(p.getType()))
+                .collect(Collectors.toList());
         Map<String, Integer> locationCount = new HashMap<>();
         for (Post post : posts) {
             String key = String.format("%.4f,%.4f", post.getLatitude(), post.getLongitude());
@@ -87,37 +110,22 @@ public class PostService {
         return heatData;
     }
 
-    @Autowired
-    private CommentRepository commentRepository;
-    @Autowired
-    private LikeRepository likeRepository;
-    @Autowired
-    private FavoriteRepository favoriteRepository;
-
     public void deletePost(String username, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
         if (!post.getUser().getUsername().equals(username)) {
             throw new RuntimeException("无权删除此帖子");
         }
-        // 1. 删除评论
         commentRepository.deleteByPostId(postId);
-        // 2. 删除点赞
         likeRepository.deleteByPostId(postId);
-        // 3. 删除收藏
         favoriteRepository.deleteByPostId(postId);
-        // 4. 最后删除帖子
         postRepository.delete(post);
-
     }
 
-    // 在 PostService 中添加以下方法
-
-    /**
-     * 统计各标签的帖子数量（一个帖子有多个标签则每个标签都计数）
-     */
     public Map<String, Integer> getTagStats() {
-        List<Post> allPosts = postRepository.findAll();
+        List<Post> allPosts = postRepository.findAll().stream()
+                .filter(p -> "approved".equals(p.getReviewStatus()) || "official".equals(p.getType()))
+                .collect(Collectors.toList());
         Map<String, Integer> tagCount = new HashMap<>();
         for (Post post : allPosts) {
             if (post.getTags() != null && !post.getTags().isBlank()) {
@@ -133,11 +141,10 @@ public class PostService {
         return tagCount;
     }
 
-    /**
-     * 统计各地点的帖子数量，返回前 topN 个地点
-     */
     public List<LocationStatDTO> getLocationStats(int topN) {
-        List<Post> allPosts = postRepository.findAll();
+        List<Post> allPosts = postRepository.findAll().stream()
+                .filter(p -> "approved".equals(p.getReviewStatus()) || "official".equals(p.getType()))
+                .collect(Collectors.toList());
         Map<String, Integer> locationCount = new HashMap<>();
         for (Post post : allPosts) {
             String loc = post.getLocationName();
@@ -156,5 +163,26 @@ public class PostService {
                     return dto;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // 管理端：获取指定审核状态的帖子（分页）
+    public List<Post> getPostsByReviewStatus(String reviewStatus, int page, int size) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createdAt").descending());
+        return postRepository.findByReviewStatusOrderByCreatedAtDesc(reviewStatus, pageable);
+    }
+
+    // 审核帖子
+    @Transactional
+    public void reviewPost(Long postId, String action) {
+        Post post = postRepository.findById(postId)
+                .orElseThrow(() -> new RuntimeException("帖子不存在"));
+        if ("approve".equals(action)) {
+            post.setReviewStatus("approved");
+        } else if ("reject".equals(action)) {
+            post.setReviewStatus("rejected");
+        } else {
+            throw new RuntimeException("无效操作");
+        }
+        postRepository.save(post);
     }
 }

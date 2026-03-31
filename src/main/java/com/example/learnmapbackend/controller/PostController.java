@@ -134,6 +134,8 @@ public class PostController {
             return ApiResponse.error(e.getMessage());
         }
     }
+
+
     @GetMapping("/official")
     public ApiResponse<List<Post>> getOfficialPosts(@RequestParam(defaultValue = "0") int page,
                                                     @RequestParam(defaultValue = "10") int size) {

@@ -41,13 +41,13 @@ public class AdminController {
         try {
             String token = userService.login(username, password);
             if (!username.contains("admin")) {
-                return "redirect:/admin/login?error=1";  // 只传递标志，不传消息
+                return "redirect:/admin/login?error=1";
             }
             session.setAttribute("adminToken", token);
             session.setAttribute("adminUsername", username);
             return "redirect:/admin/dashboard";
         } catch (RuntimeException e) {
-            return "redirect:/admin/login?error=1";  // 只传递标志
+            return "redirect:/admin/login?error=1";
         }
     }
 
@@ -86,11 +86,10 @@ public class AdminController {
         try {
             String username = (String) session.getAttribute("adminUsername");
             String imageUrls = "";
-            // 如果有图片，调用上传接口（这里先留空，你可以稍后实现）
-            // 可复用已有的 FileController 上传逻辑
+            // 如果有图片，可调用上传接口
             Post post = postService.createPost(
                     username, title, content, locationName, latitude, longitude,
-                    tags, isAnonymous, imageUrls, "official"  // 关键：type 设为 official
+                    tags, isAnonymous, imageUrls, "official"
             );
             return "redirect:/admin/publish?success=true";
         } catch (Exception e) {
@@ -104,7 +103,6 @@ public class AdminController {
         if (session.getAttribute("adminToken") == null) {
             return "redirect:/admin/login";
         }
-        // 获取所有校方通知，按时间倒序
         List<Post> posts = postRepository.findByTypeOrderByCreatedAtDesc("official", PageRequest.of(0, 100));
         model.addAttribute("posts", posts);
         return "admin/list";
@@ -118,14 +116,14 @@ public class AdminController {
         }
         try {
             String username = (String) session.getAttribute("adminUsername");
-            postService.deletePost(username, id); // 复用之前的删除方法
+            postService.deletePost(username, id);
         } catch (Exception e) {
             // 可选：记录错误
         }
         return "redirect:/admin/posts";
     }
 
-    // 编辑页面（可选，简单实现）
+    // 编辑页面
     @GetMapping("/posts/edit/{id}")
     public String editPage(@PathVariable Long id, Model model, HttpSession session) {
         if (session.getAttribute("adminToken") == null) {
@@ -151,7 +149,6 @@ public class AdminController {
             return "redirect:/admin/login";
         }
         try {
-            // 简单实现：先查询，再更新字段，保存
             Post post = postRepository.findById(id).orElseThrow(() -> new RuntimeException("帖子不存在"));
             post.setTitle(title);
             post.setContent(content);
@@ -160,7 +157,6 @@ public class AdminController {
             post.setLongitude(longitude);
             post.setTags(tags);
             post.setAnonymous(isAnonymous);
-            // 注意：类型保持 official
             postRepository.save(post);
             return "redirect:/admin/posts";
         } catch (Exception e) {
@@ -195,12 +191,32 @@ public class AdminController {
         return "admin/detail";
     }
 
+    // 内容审核页面（带待审核帖子列表）
     @GetMapping("/content-review")
-    public String contentReviewPage(HttpSession session) {
+    public String contentReviewPage(Model model, HttpSession session) {
         if (session.getAttribute("adminToken") == null) {
             return "redirect:/admin/login";
         }
+        // 加载待审核帖子（reviewStatus = "pending"）
+        List<Post> pendingPosts = postService.getPostsByReviewStatus("pending", 0, 100);
+        model.addAttribute("pendingPosts", pendingPosts);
         return "admin/content-review";
+    }
+
+    // 审核操作
+    @PostMapping("/review/{id}")
+    public String reviewPost(@PathVariable Long id,
+                             @RequestParam String action,
+                             HttpSession session) {
+        if (session.getAttribute("adminToken") == null) {
+            return "redirect:/admin/login";
+        }
+        try {
+            postService.reviewPost(id, action);
+        } catch (Exception e) {
+            // 可记录日志
+        }
+        return "redirect:/admin/content-review";
     }
 
     @GetMapping("/tag-manage")
@@ -218,7 +234,4 @@ public class AdminController {
         }
         return "admin/admin-manage";
     }
-
-
 }
-

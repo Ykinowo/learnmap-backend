@@ -31,7 +31,7 @@ public class Post {
     private String tags;
 
     @Column(name = "is_anonymous")
-    @JsonProperty("isAnonymous")   // 新增：指定序列化后的字段名
+    @JsonProperty("isAnonymous")
     private boolean isAnonymous = false;
 
     @Column(name = "like_count")
@@ -47,5 +47,8 @@ public class Post {
     private Date updatedAt = new Date();
 
     @Column(name = "type")
-    private String type = "normal";  // 默认普通帖子
+    private String type = "normal";
+
+    @Column(name = "review_status")
+    private String reviewStatus = "pending";
 }
