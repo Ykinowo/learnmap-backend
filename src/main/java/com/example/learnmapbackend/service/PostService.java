@@ -185,4 +185,11 @@ public class PostService {
         }
         postRepository.save(post);
     }
+
+    public List<Post> getMyPosts(String username) {
+        User user = userRepository.findByUsername(username)
+                .orElseThrow(() -> new RuntimeException("用户不存在"));
+        // 按创建时间倒序，返回该用户的所有帖子（不审核状态限制）
+        return postRepository.findByUserIdOrderByCreatedAtDesc(user.getId());
+    }
 }

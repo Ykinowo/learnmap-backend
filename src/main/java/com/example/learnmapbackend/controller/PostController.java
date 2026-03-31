@@ -145,4 +145,18 @@ public class PostController {
         List<Post> posts = postRepository.findByTypeAndReviewStatusOrderByCreatedAtDesc("official", "approved", pageable);
         return ApiResponse.success(posts);
     }
+
+    @GetMapping("/my")
+    public ApiResponse<List<Post>> getMyPosts(HttpServletRequest request) {
+        String username = (String) request.getAttribute("username");
+        if (username == null) {
+            return ApiResponse.error("未登录");
+        }
+        try {
+            List<Post> myPosts = postService.getMyPosts(username);
+            return ApiResponse.success(myPosts);
+        } catch (Exception e) {
+            return ApiResponse.error(e.getMessage());
+        }
+    }
 }

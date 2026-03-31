@@ -18,5 +18,6 @@ public interface PostRepository extends JpaRepository<Post, Long> {
     // 按审核状态和类型查询（可选，用于筛选普通帖子的审核）
     List<Post> findByTypeAndReviewStatusOrderByCreatedAtDesc(String type, String reviewStatus, Pageable pageable);
 
-
+    // 添加方法
+    List<Post> findByUserIdOrderByCreatedAtDesc(Long userId);
 }
