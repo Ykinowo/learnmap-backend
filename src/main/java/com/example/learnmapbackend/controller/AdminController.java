@@ -197,7 +197,6 @@ public class AdminController {
         if (session.getAttribute("adminToken") == null) {
             return "redirect:/admin/login";
         }
-        // 加载待审核帖子（reviewStatus = "pending"）
         List<Post> pendingPosts = postService.getPostsByReviewStatus("pending", 0, 100);
         model.addAttribute("pendingPosts", pendingPosts);
         return "admin/content-review";
@@ -205,9 +204,7 @@ public class AdminController {
 
     // 审核操作
     @PostMapping("/review/{id}")
-    public String reviewPost(@PathVariable Long id,
-                             @RequestParam String action,
-                             HttpSession session) {
+    public String reviewPost(@PathVariable Long id, @RequestParam String action, HttpSession session) {
         if (session.getAttribute("adminToken") == null) {
             return "redirect:/admin/login";
         }
