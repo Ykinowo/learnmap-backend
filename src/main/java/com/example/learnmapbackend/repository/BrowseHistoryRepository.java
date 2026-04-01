@@ -8,4 +8,6 @@ import java.util.Optional;
 public interface BrowseHistoryRepository extends JpaRepository<BrowseHistory, Long> {
     List<BrowseHistory> findByUserIdOrderByBrowseTimeDesc(Long userId);
     Optional<BrowseHistory> findByUserIdAndPostId(Long userId, Long postId);
+
+    void deleteByPostId(Long postId);
 }

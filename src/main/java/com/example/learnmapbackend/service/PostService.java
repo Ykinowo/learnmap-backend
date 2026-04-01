@@ -33,6 +33,7 @@ public class PostService {
     @Autowired
     private FavoriteRepository favoriteRepository;
 
+    @Transactional
     public Post createPost(String username, String title, String content,
                            String locationName, Double latitude, Double longitude,
                            String tags, boolean isAnonymous, String imageUrls, String type) {
@@ -110,12 +111,17 @@ public class PostService {
         return heatData;
     }
 
+    @Autowired
+    private BrowseHistoryRepository browseHistoryRepository;
+
+    @Transactional
     public void deletePost(String username, Long postId) {
         Post post = postRepository.findById(postId)
                 .orElseThrow(() -> new RuntimeException("帖子不存在"));
         if (!post.getUser().getUsername().equals(username)) {
             throw new RuntimeException("无权删除此帖子");
         }
+        browseHistoryRepository.deleteByPostId(postId);
         commentRepository.deleteByPostId(postId);
         likeRepository.deleteByPostId(postId);
         favoriteRepository.deleteByPostId(postId);
